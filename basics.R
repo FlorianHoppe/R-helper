@@ -14,8 +14,9 @@ source("script.R") # loads R script
 
 download.file("https://example.com/remote.csv",destfile="local.csv",method="curl")
 d <- read.table("test.csv")
-d <- read.table("test.csv",sep=",",header=TRUE)
+d <- read.table("test.csv",sep=",",header=F,col.names=c('a','b','c'))
 head(d) # shows first few lines/rows
+tail(d,20) # show last 20 lines
 d <- read.csv(file.choose()) # pick file manually
 
 library(xlsx)
@@ -37,9 +38,22 @@ ls() # show all variables
 rm(objA) # remove variable
 rm(list=ls()) # remove everything
 
+library(Hmisc)
 install.packages("PackageName", repos = "http://cran.at.r-project.org")
 
 ### Matrices, lists and dataframes:
+
+> x <- 1:3
+> y <- 4:6
+> rbind(x,y)
+  [,1] [,2] [,3]
+x    1    2    3
+y    4    5    6
+> cbind(x,y)
+     x y
+[1,] 1 4
+[2,] 2 5
+[3,] 3 6
 
 > m <- matrix(1:6,2,3)
 > m
@@ -127,14 +141,17 @@ unique(d$col)
   a 2 0
   b 0 1
 
+summarize(d$var1,d$var2,FUNCTION) # applies a FUNCTION to var1 grouped by var2  (needs library(Hmisc))
+
 
 ## Check for certain values
 any(d$col>min) 
 all(!is.na(d$col)) 
 
 ## Select certain rows and columns
-d[!is.na(d$col1) & !is.na(d$col2),] # all columns where col1 and col2 are not NA
-d[!is.na(d$col1) & !is.na(d$col2),c("col3","col4")] # only some columns
+d[!is.na(d$col1) & !is.na(d$col2),] # all columns col1 and col2 are not NA
+d[!is.na(d$col1) & !is.na(d$col2), c("col3","col4")] # only some columns
+d[!is.na(d$col1) & !is.na(d$col2),-c("col3","col4")] # all columns but some columns
 
 > d
   A    B
@@ -172,6 +189,8 @@ cut(d$col,seq(0,100,25)) # assigns original values to bins defined by the given 
 
 ## Handling NA values:
 > x <- c(1,2,NA,4)
+> x[na.omit(x)]
+[1] 1 2 4
 > bad <- is.na(x)
 > x[!bad]
 [1] 1 2 4
@@ -193,7 +212,11 @@ cut(d$col,seq(0,100,25)) # assigns original values to bins defined by the given 
 FALSE  TRUE 
     2     1 
 
-### String manipulations
+# if NA have to be filled in a matrix, try:
+library(impute)
+goodData <- impute.knn(badData)$data
+
+### Strings
 > strsplit("a,b,c",",")
 [[1]]
 [1] "a" "b" "c"
@@ -203,6 +226,22 @@ FALSE  TRUE
 [1] "a;b,c"
 > gsub(";",",","a;b;c",ignore.case=TRUE)
 [1] "a,b,c"
+
+> as.character(1:12)
+ [1] "1"  "2"  "3"  "4"  "5"  "6"  "7"  "8"  "9"  "10" "11" "12"
+
+# data converters for typical german formats:
+as.numeric(gsub(',','.',data))   # numbers like 1,23
+
+### Dates and Times
+
+Sys.Date()
+Sys.time()
+
+# conversions
+as.Date(data,"%d.%m.%y")        # dates like 12.9.76
+as.Date(data,"%d.%m.%Y")        # dates like 12.9.1976
+julian(Sys.Date())        # converts dates to simple easy to compare numerica values, is very handy to treat dates as a continuous variable
 
 
 #### Statistics 
@@ -233,13 +272,17 @@ sample(1:5,size=10,replace=TRUE,prob=c(.5,.1,.1,.2,.1))
 # creating a smooth density function from some data
 density(rnorm(100,0,1))
 
+
 #### Plotting
 
 # basic functions
 plot
-abline(c(0,1)) # for a diagonal line
+abline(c(0,1)) # for e.g. a diagonal line
 lines
 points
+dev.new() # to get a new plot window
+dev.set(dev.prev()) # to cycle between windows
+dev.set(dev.next())
 
 # some sample data: 
 d <- data.frame(A=rnorm(100,50,15),B=rnorm(100,75,30),C=sample(c(1,2),size=100,replace=TRUE,prob=c(.2,.8)))
